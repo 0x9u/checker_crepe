@@ -29,9 +29,11 @@ class GameState:
     def __init__(self, id) -> None:
         self.names = []
         self.position_crepes = {} # "Day" Int -> "Crepe Count" Int
+        self.days = []
 
 class Marker:
     def __init__(self) -> None:
+        print("CREPE TESTER :)\n")
         field : str = input("How many threads (Default 25)? ")
         self.threads = int(field) if field.isnumeric() else 25
         field = input("How many lines before error (Default 100)? ")
@@ -80,7 +82,7 @@ class Marker:
                 arguments.append(random.choice(0, 50))
                 crepe_type = random.choice(SIGN_CREPES)
                 arguments.append(crepe_type)
-                command += f"{mode} {random.choice(RANDOM_NAMES)}"
+                arguments.append(random.choice(RANDOM_NAMES))
                 if crepe_type == "custom":
                     # Batter
                     arguments.append(random.randint(0, 2))
@@ -98,7 +100,30 @@ class Marker:
             case "t":
                 pass
             case "b":
-                arguments.append()
+                arguments.append(random.choice(RANDOM_NAMES))
+            case "n":
+                year = random.randint(1583, 4000)
+                month = random.randint(1,12)
+                day = random.randint(1, TOTAL_MONTH_DAYS[month - 1])
+                arguments.append(f"{year}-{month}-{day}")
+            case "d":
+                pass
+            case ">":
+                pass
+            case "<":
+                pass
+            case "r":
+                arguments.append(random.choice(0, 50))
+            case "R":
+                year = random.randint(1583, 4000)
+                month = random.randint(1,12)
+                day = random.randint(1, TOTAL_MONTH_DAYS[month - 1])
+                arguments.append(f"{year}-{month}-{day}")
+            case "w":
+                pass
+            case "m":
+                pass
+
         return " ".join(arguments)
     def create_command(self) -> str:
         command = ""
@@ -106,7 +131,7 @@ class Marker:
         command += mode + " "
         command += self.add_arguments(mode)
         # Delimiter
-        command += "\\n"
+        command += r"\n"
 
                     
                 
