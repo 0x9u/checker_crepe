@@ -25,6 +25,11 @@ SIGN_CREPES = ["custom", "matcha", "strawberry", "chocolate"]
 
 MODES = ["a", "p", "c", "i", "s", "t", "b", "n", "d", ">", "<", "r", "R", "w", "m"]
 
+class GameState:
+    def __init__(self, id) -> None:
+        self.names = []
+        self.position_crepes = {} # "Day" Int -> "Crepe Count" Int
+
 class Marker:
     def __init__(self) -> None:
         field : str = input("How many threads (Default 25)? ")
@@ -37,26 +42,76 @@ class Marker:
         self.commands = int(field) if field.isnumeric() else 10000
         field = input("How many tests (Default 1000)? ")
         self.tests = int(field) if field.isnumeric() else 1000
+        self.games = {} # "Id" Int -> "GameState" GameState
     def create_test(self) -> str:
         command = ""
         year = random.randint(1583, 4000)
         month = random.randint(1,12)
         day = random.randint(1, TOTAL_MONTH_DAYS[month - 1])
-        mode = random.choice(MODES)
         command += f"{year}-{month}-{day}\\n"
         for _ in range(self.commands):
-            command += create_command()
-        run_test(command)
+            command += self.create_command()
+        self.run_test(command)
+    def add_arguments(self, mode : str) -> str:
+        arguments = []
+        match mode:
+            case "a":
+                crepe_type = random.choice(SIGN_CREPES)
+                arguments.append(crepe_type)
+                arguments.append(random.choice(RANDOM_NAMES))
+                if crepe_type == "custom":
+                    # Batter
+                    arguments.append(random.randint(0, 2))
+                    # Topping
+                    arguments.append(random.randint(0, 3))
+                    # Gluten Free
+                    arguments.append(random.randint(0,1))
+                    # Size
+                    arguments.append(random.randint(10,39))
+            case "p":
+                pass
+            case "c":
+                pass
+            case "i":
+                # TODO: maybe keep track of the position cause
+                # Majority might be wrong
+                
+                # Position
+                arguments.append(random.choice(0, 50))
+                crepe_type = random.choice(SIGN_CREPES)
+                arguments.append(crepe_type)
+                command += f"{mode} {random.choice(RANDOM_NAMES)}"
+                if crepe_type == "custom":
+                    # Batter
+                    arguments.append(random.randint(0, 2))
+                    # Topping
+                    arguments.append(random.randint(0, 3))
+                    # Gluten Free
+                    arguments.append(random.randint(0,1))
+                    # Size
+                    arguments.append(random.randint(10,39))
+            case "s":
+                pass
+            case "C":
+                # Position 0 - 25 to be less error prone
+                arguments.append(random.choice(0, 25))
+            case "t":
+                pass
+            case "b":
+                arguments.append()
+        return " ".join(arguments)
     def create_command(self) -> str:
         command = ""
-        crepe_type = random.choice(SIGN_CREPES)
-        match crepe_type:
-            case "a":
-                mode = random.choice(SIGN_CREPES)
-                command += f"{mode} {random.choice(RANDOM_NAMES)}"
-                if mode == "custom":
-                    command += f"{random.randint(0, 2)} {random.randint()}"
+        mode = random.choice(MODES)
+        command += mode + " "
+        command += self.add_arguments(mode)
+        # Delimiter
+        command += "\\n"
 
+                    
+                
+            
+        return command
     def run_test(command: str) -> None:
         pass
     def run(self) -> None:
