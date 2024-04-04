@@ -119,8 +119,8 @@ class Marker:
         #field = input("How many lines after error? (Default 100) ")
         #self.lines_after : int = int(field) if field.isnumeric() else 100
         
-        field = input("How many commmands in total? (Default 10000) ")
-        self.commands : int = int(field) if field.isnumeric() else 10000
+        field = input("How many commmands in total? (Default 1000) ")
+        self.commands : int = int(field) if field.isnumeric() else 1000
         
         field = input("Maximum time (seconds) for program to run? (Default 200) ")
         self.timeout : int = int(field) if field.isnumeric() else 200
@@ -313,7 +313,7 @@ class Marker:
             
             Colour.print_yellow("Line")
             print(f"{'-'*6}+{'-'*152}+{'-'*152}")
-            for i in range(start, first_diff_line_no):
+            for i in range(start, first_diff_line_no - 1):
                 print(f"{(i + 1):<5} | {own_lines[i]:<152} | {sample_lines[i]:<152}")
             
             Colour.print_yellow(f"\n{'Line':<5} | {'ACTUAL OUTPUT':<150} | {'EXPECTED OUTPUT':<150}")
@@ -381,6 +381,8 @@ class Marker:
                 if i != (last_diff_line + 1):
                     diff_counter += 1
                 last_diff_line = i
+            if diff_counter >= self.differences:
+                break
         
         return differences, diff_counter, own_lines, sample_lines
     def run(self) -> None:
