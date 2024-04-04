@@ -385,9 +385,10 @@ class Marker:
             for _ in range(self.tests):
                 self.create_test()
         except KeyboardInterrupt:
-            if self.failure > 0:
-                Colour.print_red(f"Tests Failed: {self.failure}")
-            if self.success > 0:
+            pass
+        if self.failure > 0:
+            Colour.print_red(f"Tests Failed: {self.failure}")
+        if self.success > 0:
                 Colour.print_green(f"Tests Passed: {self.success}")
 
 if __name__ == "__main__":
