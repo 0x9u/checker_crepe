@@ -63,31 +63,31 @@ class Colour:
     WHITE = '\033[37m'
 
     @classmethod
-    def print_red(cls, text):
+    def print_red(cls, text : str) -> None:
         print(f"{cls.RED}{text}{cls.END}")
 
     @classmethod
-    def print_green(cls, text):
+    def print_green(cls, text : str) -> None:
         print(f"{cls.GREEN}{text}{cls.END}")
 
     @classmethod
-    def print_yellow(cls, text):
+    def print_yellow(cls, text : str) -> None:
         print(f"{cls.YELLOW}{text}{cls.END}")
 
     @classmethod
-    def print_blue(cls, text):
+    def print_blue(cls, text : str) -> None:
         print(f"{cls.BLUE}{text}{cls.END}")
 
     @classmethod
-    def print_magenta(cls, text):
+    def print_magenta(cls, text : str) -> None:
         print(f"{cls.MAGENTA}{text}{cls.END}")
 
     @classmethod
-    def print_cyan(cls, text):
+    def print_cyan(cls, text : str) -> None:
         print(f"{cls.CYAN}{text}{cls.END}")
 
     @classmethod
-    def print_white(cls, text):
+    def print_white(cls, text : str) -> None:
         print(f"{cls.WHITE}{text}{cls.END}")
 
 class GameState:
@@ -121,6 +121,9 @@ class Marker:
         
         field = input("How many commmands in total? (Default 10000) ")
         self.commands : int = int(field) if field.isnumeric() else 10000
+        
+        field = input("Maximum time (seconds) for program to run? (Default 200) ")
+        self.timeout : int = int(field) if field.isnumeric() else 200
         
         field = input("How many tests? (Default 1500) ")
         self.tests : int = int(field) if field.isnumeric() else 1500
@@ -287,8 +290,8 @@ class Marker:
                                             shell=True)
         
         try:
-            own_result, own_error_txt = own_program.communicate(timeout=200)
-            sample_result, sample_error_txt = sample_program.communicate(timeout=200)
+            own_result, own_error_txt = own_program.communicate(timeout=self.timeout)
+            sample_result, sample_error_txt = sample_program.communicate(timeout=self.timeout)
         except subprocess.TimeoutExpired:
             own_program.kill()
             sample_program.kill()
@@ -311,7 +314,7 @@ class Marker:
             Colour.print_yellow("Line")
             print(f"{'-'*6}+{'-'*152}+{'-'*152}")
             for i in range(start, first_diff_line_no):
-                print(f"{(i + 1):<5} | {own_lines[i]:<150} | {sample_lines[i]:<150}")
+                print(f"{(i + 1):<5} | {own_lines[i]:<152} | {sample_lines[i]:<152}")
             
             Colour.print_yellow(f"\n{'Line':<5} | {'ACTUAL OUTPUT':<150} | {'EXPECTED OUTPUT':<150}")
             print(f"{'-'*6}+{'-'*152}+{'-'*152}")
