@@ -3,8 +3,6 @@ import uuid
 import os
 from pathlib import Path
 import asyncio
-import traceback
-
 """
 Good luck guys.
 
@@ -26,7 +24,7 @@ TODO:
 - Purposely add incorrect commands
 - Make it run compile command for file (WITH VALGRIND)
 - Compare text with each other
-- Find safe threading (to speed up the tasks) - asyncio - done
+- Find safe threading (to speed up the tasks)
 - Make it run config - perhaps??
 """
 PATH_EXAMPLE = "1511 crepe_stand"
@@ -51,9 +49,7 @@ TOTAL_MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 SIGN_CREPES = ["custom", "matcha", "strawberry", "chocolate"]
 
-MODES = ["a", "p", "c", "i", "s", "t", "b",
-         "n", "d", ">", "<", "r", "R", "w", "m"]
-
+MODES = ["a", "p", "c", "i", "s", "t", "b", "n", "d", ">", "<", "r", "R", "w", "m"]
 
 class Colour:
     END = '\033[0m'
@@ -66,107 +62,87 @@ class Colour:
     WHITE = '\033[37m'
 
     @classmethod
-    def print_red(cls, text: str) -> None:
+    def print_red(cls, text : str) -> None:
         print(f"{cls.RED}{text}{cls.END}")
 
     @classmethod
-    def print_green(cls, text: str) -> None:
+    def print_green(cls, text : str) -> None:
         print(f"{cls.GREEN}{text}{cls.END}")
 
     @classmethod
-    def print_yellow(cls, text: str) -> None:
+    def print_yellow(cls, text : str) -> None:
         print(f"{cls.YELLOW}{text}{cls.END}")
 
     @classmethod
-    def print_blue(cls, text: str) -> None:
+    def print_blue(cls, text : str) -> None:
         print(f"{cls.BLUE}{text}{cls.END}")
 
     @classmethod
-    def print_magenta(cls, text: str) -> None:
+    def print_magenta(cls, text : str) -> None:
         print(f"{cls.MAGENTA}{text}{cls.END}")
 
     @classmethod
-    def print_cyan(cls, text: str) -> None:
+    def print_cyan(cls, text : str) -> None:
         print(f"{cls.CYAN}{text}{cls.END}")
 
     @classmethod
-    def print_white(cls, text: str) -> None:
+    def print_white(cls, text : str) -> None:
         print(f"{cls.WHITE}{text}{cls.END}")
-
 
 class GameState:
     def __init__(self) -> None:
-        self.names: list[str] = []
-        # "Day" str -> "Crepe Count" Int
-        self.position_crepes: dict[int, int] = {}
-        self.days: list[str] = []
-        self.current_day: int = 0
-
+        self.names : list[str] = []
+        self.position_crepes : dict[int,int] = {} # "Day" str -> "Crepe Count" Int
+        self.days : list[str] = []
+        self.current_day : int = 0
 
 class Marker:
     def __init__(self) -> None:
         Colour.print_yellow("CREPE TESTER :)")
         Colour.print_green("TIP: Press <Enter> if you want to go default.")
         Colour.print_green(f"TIP: If you want to log this too do: {__file__.split('/')[-1]} > NAME_OF_FILE.txt\n")
-
-        field: str = input("Test name? (Default Test) ")
-        self.test_name: str = field if field != "" else "Test"
-
-        field = input(
-            "How many tasks (Stuff running at the same time)? (Default 25)  ")
-        self.max_tasks: int = int(field) if field.isnumeric() else 25
-
+        
+        field : str = input("Test name? (Default Test) ")
+        self.test_name : str = field if field != "" else "Test"
+        
+        field = input("How many threads (WIP - Not Implemented) ? (Default 25)  ")
+        self.threads : int = int(field) if field.isnumeric() else 25
+        
+        # unused
         field = input("How many differences to show? (Default 3) ")
-        self.differences: int = int(field) if field.isnumeric() else 3
-
+        self.differences : int = int(field) if field.isnumeric() else 3
+        
         field = input("How many lines before error? (Default 100) ")
-        self.lines_before: int = int(field) if field.isnumeric() else 100
-
-        # field = input("How many lines after error? (Default 100) ")
-        # self.lines_after : int = int(field) if field.isnumeric() else 100
-
+        self.lines_before : int = int(field) if field.isnumeric() else 100
+        
+        #field = input("How many lines after error? (Default 100) ")
+        #self.lines_after : int = int(field) if field.isnumeric() else 100
+        
         field = input("How many commmands in total? (Default 1000) ")
-        self.commands: int = int(field) if field.isnumeric() else 1000
-
-        field = input(
-            "Maximum time (seconds) for program to run? (Default 200) ")
-        self.timeout: int = int(field) if field.isnumeric() else 200
-
+        self.commands : int = int(field) if field.isnumeric() else 1000
+        
+        field = input("Maximum time (seconds) for program to run? (Default 200) ")
+        self.timeout : int = int(field) if field.isnumeric() else 200
+        
         field = input("How many tests? (Default 1500) ")
-        self.tests: int = int(field) if field.isnumeric() else 1500
-
-        # Array to store tasks etc etc
-        self.tasks: list[asyncio.Task[None]] = []
-        self.sempahore: asyncio.Semaphore = asyncio.Semaphore(self.max_tasks)
-        # "Id" Int -> "GameState" GameState
-        self.games: dict[str, GameState] = {}
+        self.tests : int = int(field) if field.isnumeric() else 1500
         
-        # Prevents the great race wars
-        self.games_lock : asyncio.Lock = asyncio.Lock()
+        self.games : dict[str, GameState] = {} # "Id" Int -> "GameState" GameState
         
-        self.loop = asyncio.new_event_loop()
-
-        self.success: int = 0
-        self.failure: int = 0
-
+        self.semaphore : asyncio.Semaphore = asyncio.Semaphore(self.threads)
+        self.print_lock : asyncio.Lock = asyncio.Lock()
+        self.success : int = 0
+        self.failure : int = 0
     async def create_test(self) -> None:
+        async with self.semaphore:
+            id : str = str(uuid.uuid1())
 
-        # Limits how much runs at the same time
-        async with self.sempahore:
-            id: str = str(uuid.uuid1())
+            command : list[str] = []
+            year : int = random.randint(1583, 4000)
+            month : int = random.randint(1,12)
+            day : int = random.randint(1, TOTAL_MONTH_DAYS[month - 1])
 
-            command: list[str] = []
-            year: int = random.randint(1583, 4000)
-            month: int = random.randint(1, 12)
-            day: int = random.randint(1, TOTAL_MONTH_DAYS[month - 1])
-            
-            # I don't think I need lock for it
-            # since id is unique however
-            # just for safety ig
-            
-            async with self.games_lock:
-                self.games[id] = GameState()
-
+            self.games[id] = GameState()
             self.games[id].position_crepes[f"{year}-{month:02}-{day:02}"] = 0
             self.games[id].days.append(f"{year}-{month:02}-{day:02}")
             self.games[id].current_day = 0
@@ -174,19 +150,16 @@ class Marker:
             command.append(f"{year}-{month:02}-{day:02}")
             for _ in range(self.commands):
                 command.append(await self.create_command(id))
-            
-            async with self.games_lock:
-                del self.games[id]
+            del self.games[id]
 
             await self.run_test(id, r"\n".join(command))
-
-    async def add_arguments(self, id: str, mode: str) -> str:
+    async def add_arguments(self, id : str, mode : str) -> str:
         arguments = []
         match mode:
             case "a":
-                current_day: str = self.games[id].days[self.games[id].current_day]
+                current_day : str = self.games[id].days[self.games[id].current_day]
                 self.games[id].position_crepes[current_day] += 1
-                crepe_type: str = random.choice(SIGN_CREPES)
+                crepe_type : str = random.choice(SIGN_CREPES)
                 arguments.append(crepe_type)
                 arguments.append(random.choice(RANDOM_NAMES))
                 if crepe_type == "custom":
@@ -195,19 +168,18 @@ class Marker:
                     # Topping
                     arguments.append(str(random.randint(0, 3)))
                     # Gluten Free
-                    arguments.append(str(random.randint(0, 1)))
+                    arguments.append(str(random.randint(0,1)))
                     # Size
-                    arguments.append(str(random.randint(10, 39)))
+                    arguments.append(str(random.randint(10,39)))
             case "p":
                 pass
             case "c":
                 pass
             case "i":
-                current_day: str = self.games[id].days[self.games[id].current_day]
-                max_position: int = self.games[id].position_crepes[current_day]
-                arguments.append(str(random.randint(
-                    1, max_position) if max_position > 1 else random.randint(0, 256)))
-                crepe_type: str = random.choice(SIGN_CREPES)
+                current_day : str = self.games[id].days[self.games[id].current_day]
+                max_position : int = self.games[id].position_crepes[current_day]
+                arguments.append(str(random.randint(1, max_position) if max_position > 1 else random.randint(0,256)))
+                crepe_type : str = random.choice(SIGN_CREPES)
                 arguments.append(crepe_type)
                 arguments.append(random.choice(RANDOM_NAMES))
                 if crepe_type == "custom":
@@ -216,70 +188,68 @@ class Marker:
                     # Topping
                     arguments.append(str(random.randint(0, 3)))
                     # Gluten Free
-                    arguments.append(str(random.randint(0, 1)))
+                    arguments.append(str(random.randint(0,1)))
                     # Size
-                    arguments.append(str(random.randint(10, 39)))
-
+                    arguments.append(str(random.randint(10,39)))
+                
                 self.games[id].position_crepes[current_day] += 1
             case "s":
                 pass
             case "C":
                 # Position 0 - 25 to be less error prone
-                current_day: str = self.games[id].days[self.games[id].current_day]
-                max_position: int = self.games[id].position_crepes[current_day]
-                arguments.append(str(random.randint(
-                    1, max_position) if max_position > 1 else random.randint(0, 256)))
+                current_day : str = self.games[id].days[self.games[id].current_day]
+                max_position : int = self.games[id].position_crepes[current_day]
+                arguments.append(str(random.randint(1, max_position) if max_position > 1 else random.randint(0,256)))
             case "t":
                 pass
             case "b":
                 arguments.append(random.choice(RANDOM_NAMES))
             case "n":
-                year: int = random.randint(1583, 4000)
-                month: int = random.randint(1, 12)
-                day: int = random.randint(1, TOTAL_MONTH_DAYS[month - 1])
+                year : int = random.randint(1583, 4000)
+                month : int = random.randint(1,12)
+                day : int = random.randint(1, TOTAL_MONTH_DAYS[month - 1])
                 new_date = f"{year}-{month:02}-{day:02}"
                 arguments.append(new_date)
-
+                
                 self.games[id].days.append(new_date)
                 self.games[id].position_crepes[new_date] = 0
-
+                
                 current_date = self.games[id].days[self.games[id].current_day]
                 self.games[id].days.sort()
-                self.games[id].current_day = self.games[id].days.index(
-                    current_date)
-
+                self.games[id].current_day = self.games[id].days.index(current_date)
+                
             case "d":
                 pass
             case ">":
-                self.games[id].current_day += 1
+                self.games[id].current_day += 1;
                 self.games[id].current_day %= len(self.games[id].days)
             case "<":
-                self.games[id].current_day -= 1
+                self.games[id].current_day -= 1;
                 self.games[id].current_day %= len(self.games[id].days)
             case "r":
-                current_day: str = self.games[id].days[self.games[id].current_day]
-                max_position: int = self.games[id].position_crepes[current_day]
+                current_day : str = self.games[id].days[self.games[id].current_day]
+                max_position : int = self.games[id].position_crepes[current_day]
                 arguments.append(str(random.randint(0, max_position)))
             case "R":
-                if random.randint(0, 1) == 1:
-                    max_year: int = int(self.games[id].days[-1].split("-")[0])
-                    min_year: int = int(self.games[id].days[0].split("-")[0])
+                if random.randint(0,1) == 1:
+                    max_year : int = int(self.games[id].days[-1].split("-")[0])
+                    min_year : int = int(self.games[id].days[0].split("-")[0])
                 else:
-                    max_year: int = 9999
-                    min_year: int = 1583
-                year: int = random.randint(min_year, max_year)
-                month: int = random.randint(1, 12)
-                day: int = random.randint(1, TOTAL_MONTH_DAYS[month - 1])
+                    max_year : int = 9999
+                    min_year : int = 1583
+                year : int = random.randint(min_year, max_year)
+                month : int = random.randint(1,12)
+                day : int = random.randint(1, TOTAL_MONTH_DAYS[month - 1])
                 date_remove = f"{year}-{month:02}-{day:02}"
-
+                
                 arguments.append(date_remove)
-
+                
                 if date_remove in self.games[id].days:
                     index = self.games[id].days.index(date_remove)
                     if index == self.games[id].current_day:
                         self.games[id].current_day += 1
                         self.games[id].current_day %= len(self.games[id].days)
-
+                
                     del self.games[id].position_crepes[date_remove]
                     self.games[id].days.remove(date_remove)
 
@@ -295,143 +265,116 @@ class Marker:
                 raise TypeError("Wtf this shouldn't be happening")
 
         return " ".join(arguments)
-
-    async def create_command(self, id: str) -> str:
+    async def create_command(self, id : str) -> str:
         command = ""
         mode = random.choice(MODES)
-
+        
         command += mode
         arguments = await self.add_arguments(id, mode)
         if len(arguments) > 0:
             command += " "
         command += arguments
         return command
-
-    async def run_test(self, id: str, command: str) -> None:
+    async def run_test(self, id : str, command: str) -> None:
         try:
-            own_program = await asyncio.create_subprocess_shell(f"echo \"{command}\" | {PATH_PROGRAM}",
-                                                                stdout=asyncio.subprocess.PIPE,
-                                                                stderr=asyncio.subprocess.PIPE,
-                                                                shell=True)
-        except FileNotFoundError:
-            Colour.print_red("You need to put your file path in PATH_PROGRAM")
-            exit(1)
-        sample_program = await asyncio.create_subprocess_shell(f"echo \"{command}\" | {PATH_EXAMPLE}",
-                                                               stdout=asyncio.subprocess.PIPE,
-                                                               stderr=asyncio.subprocess.PIPE,
-                                                               shell=True)
-
-        try:
-            own_result, own_error_txt = await own_program.communicate(timeout=self.timeout)
-            sample_result, sample_error_txt = await sample_program.communicate(timeout=self.timeout)
+            own_program = await asyncio.create_subprocess_shell(
+                f"echo \"{command}\" | {PATH_PROGRAM}",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE)
+            
+            sample_program = await asyncio.create_subprocess_shell(
+                f"echo \"{command}\" | {PATH_EXAMPLE}",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE)
+            
+            own_result, own_error_txt = await own_program.communicate()
+            sample_result, sample_error_txt = await sample_program.communicate()
+            own_result = own_result.decode('utf-8')
+            own_error_txt = own_error_txt.decode('utf-8')
+            sample_result = sample_result.decode('utf-8')
+            sample_error_txt = sample_error_txt.decode('utf-8')
+            
         except asyncio.TimeoutError:
             own_program.kill()
             sample_program.kill()
-
-            await own_program.wait()
-            await sample_program.wait()
-
             Colour.print_red("Timeout reached")
-            Colour.print_yellow(
-                f"NOTE: Command is logged in folder {folder_path}\n")
-            Colour.print_yellow(
-                f"NOTE: You can copy and paste the command from Command.txt from said folder\n")
-
-            folder_path = f"{os.getcwd()}/Bulk Tests/{self.test_name}/{id}/"
-
-            parent_path = Path(folder_path)
-            parent_path.mkdir(parents=True, exist_ok=True)
-
-            command_path = Path(f"{folder_path}/Command.txt")
-
-            with command_path.open("w") as file:
-                file.write(f"echo -e \"{command}\" | {PATH_PROGRAM}")
-
             self.failure += 1
             return
+        
+        async with self.print_lock:
+            print(f"Test ID: {id}")
+            differences, diff_counter, own_lines, sample_lines = self.compare_texts(own_result, sample_result)
+            if differences:
+                Colour.print_red("Test Failed")
+                first_diff_line_no = differences[0][0]
+                start = max(0, first_diff_line_no - self.lines_before)
 
-        print(f"Test ID: {id}")
-        differences, diff_counter, own_lines, sample_lines = self.compare_texts(
-            own_result, sample_result)
+                if self.lines_before > 0:
+                    Colour.print_yellow(f"Here are the {self.lines_before} lines (or fewer) before the first difference:\n")
 
-        if differences:
-            Colour._red("Test Failed")
+                Colour.print_yellow("Line")
 
-            first_diff_line_no = differences[0][0]
-            start = max(0, first_diff_line_no - self.lines_before)
-            if self.lines_before > 0:
-                Colour.print_yellow(f"Here are the {self.lines_before} lines (or fewer) before the first difference:\n")
+                print(f"{'-'*6}+{'-'*152}+{'-'*152}")
+                for i in range(start, first_diff_line_no - 1):
+                    print(f"{(i + 1):<5} | {own_lines[i]:<152} | {sample_lines[i]:<152}")
 
-            Colour.print_yellow("Line")
-            print(f"{'-'*6}+{'-'*152}+{'-'*152}")
-            for i in range(start, first_diff_line_no - 1):
-                print(
-                    f"{(i + 1):<5} | {own_lines[i]:<152} | {sample_lines[i]:<152}")
+                Colour.print_yellow(f"\n{'Line':<5} | {'ACTUAL OUTPUT':<150} | {'EXPECTED OUTPUT':<150}")
 
-            Colour.print_yellow(f"\n{'Line':<5} | {'ACTUAL OUTPUT':<150} | {'EXPECTED OUTPUT':<150}")
-            print(f"{'-'*6}+{'-'*152}+{'-'*152}")
+                print(f"{'-'*6}+{'-'*152}+{'-'*152}")
 
-            for line_num, own_line, sample_line in differences:
-                print(f"{line_num:<5} - {own_line:<150} + {sample_line:<150}")
+                for line_num, own_line, sample_line in differences:
+                    print(f"{line_num:<5} - {own_line:<150} + {sample_line:<150}")
+                print(f"\nTotal Differences: {diff_counter}")
+                folder_path = f"{os.getcwd()}/Bulk Tests/{self.test_name}/{id}/"
 
-            print(f"\nTotal Differences: {diff_counter}")
+                Colour.print_yellow(f"NOTE: Test is logged in folder {folder_path}\n")
+                Colour.print_yellow(f"NOTE: You can copy and paste the command from Command.txt from said folder\n")
 
-            folder_path = f"{os.getcwd()}/Bulk Tests/{self.test_name}/{id}/"
-            Colour.print_yellow(
-                f"NOTE: Test is logged in folder {folder_path}\n")
-            Colour.print_yellow(
-                f"NOTE: You can copy and paste the command from Command.txt from said folder\n")
+                if len(own_error_txt) > 0:
+                    Colour.print_red("Your program also returned an error:")
+                    Colour.print_red(own_error_txt)
 
-            if len(own_error_txt) > 0:
-                Colour.print_red("Your program also returned an error:")
-                Colour.print_red(own_error_txt)
+                if len(sample_error_txt) > 0:
+                    Colour.print_red("Congrats you managed to break 1511 crepe_stand!!!:")
+                    Colour.print_red(sample_error_txt)
 
-            if len(sample_error_txt) > 0:
-                Colour.print_red(
-                    "Congrats you managed to break 1511 crepe_stand!!!:")
-                Colour.print_red(sample_error_txt)
+                parent_path = Path(folder_path)
+                parent_path.mkdir(parents=True, exist_ok=True)
 
-            parent_path = Path(folder_path)
-            parent_path.mkdir(parents=True, exist_ok=True)
+                own_result_path = Path(f"{folder_path}/Actual.txt")
+                with own_result_path.open("w") as file:
+                    file.write(own_result)
+                    file.write(own_error_txt)
 
-            own_result_path = Path(f"{folder_path}/Actual.txt")
+                sample_result_path = Path(f"{folder_path}/Expected.txt")
+                with sample_result_path.open("w") as file:
+                    file.write(sample_result)
+                    file.write(sample_error_txt)
 
-            with own_result_path.open("w") as file:
-                file.write(own_result)
-                file.write(own_error_txt)
+                command_path = Path(f"{folder_path}/Command.txt")
+                with command_path.open("w") as file:
+                    file.write(f"echo -e \"{command}\" | {PATH_PROGRAM}")
 
-            sample_result_path = Path(f"{folder_path}/Expected.txt")
-
-            with sample_result_path.open("w") as file:
-                file.write(sample_result)
-                file.write(sample_error_txt)
-
-            command_path = Path(f"{folder_path}/Command.txt")
-
-            with command_path.open("w") as file:
-                file.write(f"echo -e \"{command}\" | {PATH_PROGRAM}")
-
-            sample_result_path
-            self.failure += 1
-        else:
-            Colour.print_green("Test Passed")
-            self.success += 1
-
-    async def compare_texts(self, own_result: str, sample_result: str) -> tuple[list[tuple[int, str, str]], int, list[str], list[str]]:
+                sample_result_path
+                self.failure += 1
+            else:
+                Colour.print_green("Test Passed")
+                self.success += 1
+    def compare_texts(self, own_result : str, sample_result : str) -> tuple[list[tuple[int, str, str]], int, list[str], list[str]]:
         own_lines = own_result.splitlines()
         sample_lines = sample_result.splitlines()
-
+        
         max_length = max(len(own_lines), len(sample_lines))
-
-        differences: list[tuple[int, str, str]] = []
-
+        
+        differences : list[tuple[int, str, str]] = []
+        
         last_diff_line = -2
         diff_counter = 0
-
+        
         for i in range(max_length):
             own_line = own_lines[i] if i < len(own_lines) else ""
             sample_line = sample_lines[i] if i < len(sample_lines) else ""
-
+            
             if own_line != sample_line:
                 differences.append((i + 1, own_line, sample_line))
                 if i != (last_diff_line + 1):
@@ -439,47 +382,24 @@ class Marker:
                 last_diff_line = i
             if diff_counter >= self.differences:
                 break
-
+        
         return differences, diff_counter, own_lines, sample_lines
-
-    async def create_all_tests(self) -> None:
-        task_genocide : bool = False
-        # Playing with fire
-        # Exceptions are silent
-        # :)
-        
+    async def run_async(self) -> None:
+        tasks = [self.create_test() for _ in range(self.tests)]
+        await asyncio.gather(*tasks)
+    def run(self) -> None:
         try:
-            for _ in range(self.tests):
-                self.tasks.append(asyncio.create_task(self.create_test()))
-
-            # Unpack
-            await asyncio.gather(*self.tasks)
-        except asyncio.CancelledError:
-            Colour.print_yellow("Task was cancelled")
-        except Exception as e:
-            Colour.print_red("An error occured:")
-            traceback.print_exception(e)
-            task_genocide = True
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(self.run_async())
         except KeyboardInterrupt:
-            task_genocide = True
-        
-        # Task Genocide
-        if task_genocide:
-            Colour.print_yellow("Cancelling tasks...")
-            for task in self.tasks:
-                task.cancel()
-            await asyncio.gather(*self.tasks, return_exceptions=True)
-            Colour.print_yellow("All tasks have been cancelled")
-        
+            pass
+        finally:
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
         if self.failure > 0:
             Colour.print_red(f"Tests Failed: {self.failure}")
         if self.success > 0:
-            Colour.print_green(f"Tests Passed: {self.success}")
-
-    def run(self) -> None:
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_until_complete(self.create_all_tests())
-        self.loop.close()
+                Colour.print_green(f"Tests Passed: {self.success}")
 
 if __name__ == "__main__":
     marker = Marker()
