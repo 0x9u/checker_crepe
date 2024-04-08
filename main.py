@@ -11,6 +11,9 @@ btw insert ur path to ur program in path_program
 e.g. ./crepe_stand
 if this file is in same directory
 
+TO RUN THIS DO
+python3 main.py
+
 feel free to modify
 p.s. if you cant be bothered to copy and paste the code itself
 then just import the class and inherit its properties
@@ -127,6 +130,9 @@ class Marker:
         
         field = input("How many tests? (Default 1500) ")
         self.tests : int = int(field) if field.isnumeric() else 1500
+        
+        field = input("How much padding for output? (Default 50) ")
+        self.padding : int = int(field) if field.isnumeric() else 50
         
         self.games : dict[str, GameState] = {} # "Id" Int -> "GameState" GameState
         
@@ -312,15 +318,15 @@ class Marker:
                 Colour.print_yellow(f"Here are the {self.lines_before} lines (or fewer) before the first difference:\n")
             
             Colour.print_yellow("Line")
-            print(f"{'-'*6}+{'-'*152}+{'-'*152}")
+            print(f"{'-'*6}+{'-'*(self.padding+2)}+{'-'*(self.padding+2)}")
             for i in range(start, first_diff_line_no - 1):
-                print(f"{(i + 1):<5} | {own_lines[i]:<152} | {sample_lines[i]:<152}")
+                print(f"{(i + 1):<5} | {own_lines[i]:<{self.padding+2}} | {sample_lines[i]:<{self.padding+2}}")
             
-            Colour.print_yellow(f"\n{'Line':<5} | {'ACTUAL OUTPUT':<150} | {'EXPECTED OUTPUT':<150}")
-            print(f"{'-'*6}+{'-'*152}+{'-'*152}")
+            Colour.print_yellow(f"\n{'Line':<5} | {'ACTUAL OUTPUT':<{self.padding}} | {'EXPECTED OUTPUT':<{self.padding}}")
+            print(f"{'-'*6}+{'-'*(self.padding+2)}+{'-'*(self.padding+2)}")
             
             for line_num, own_line, sample_line in differences:
-                print(f"{line_num:<5} - {own_line:<150} + {sample_line:<150}")
+                print(f"{line_num:<5} - {own_line:<{self.padding+2}} + {sample_line:<{self.padding+2}}")
             
             print(f"\nTotal Differences: {diff_counter}")
             
