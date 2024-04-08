@@ -399,8 +399,12 @@ class Marker:
             pass
         if self.failure > 0:
             Colour.print_red(f"Tests Failed: {self.failure}")
+        else:
+            Colour.print_red("No Tests Failed - You're a winner!")
         if self.success > 0:
                 Colour.print_green(f"Tests Passed: {self.success}")
+        else:
+            Colour.print_green("No Tests Passed :(")
 
 if __name__ == "__main__":
     marker = Marker()
