@@ -369,6 +369,7 @@ class Marker:
             sample_result_path
             self.failure += 1
         elif len(own_error_txt) > 0 or len(sample_error_txt) > 0:
+            Colour.print_red("Test Failed")
             if len(own_error_txt) > 0:
                 Colour.print_red("Your program also returned an error:")
                 Colour.print_red(own_error_txt)
@@ -377,7 +378,6 @@ class Marker:
                 Colour.print_red("Congrats you managed to break 1511 crepe_stand!!!:")
                 Colour.print_red(sample_error_txt)
             
-            Colour.print_red("Test Failed")
             parent_path = Path(folder_path)
             parent_path.mkdir(parents=True, exist_ok=True)
             

@@ -369,6 +369,7 @@ class Marker:
                 sample_result_path
                 self.failure += 1
             elif len(own_error_txt) > 0 or len(sample_error_txt) > 0:
+                Colour.print_red("Test Failed")
                 if len(own_error_txt) > 0:
                     Colour.print_red("Your program also returned an error:")
                     Colour.print_red(own_error_txt)
