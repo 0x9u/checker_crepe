@@ -10,6 +10,10 @@ btw insert ur path to ur program in path_program
 e.g. ./crepe_stand
 if this file is in same directory
 
+BEFORE YOU DO IT:
+Run: "dcc --valgrind crepe_stand.c main.c -o crepe_stand"
+to check for memory leaks
+
 TO RUN THIS DO
 python3 async_main.py
 
@@ -364,6 +368,23 @@ class Marker:
 
                 sample_result_path
                 self.failure += 1
+            elif len(own_error_txt) > 0 or len(sample_error_txt) > 0:
+                parent_path = Path(folder_path)
+                parent_path.mkdir(parents=True, exist_ok=True)
+
+                own_result_path = Path(f"{folder_path}/Actual.txt")
+
+                with own_result_path.open("w") as file:
+                    file.write(own_result)
+                    file.write(own_error_txt)
+
+                sample_result_path = Path(f"{folder_path}/Expected.txt")
+
+                with sample_result_path.open("w") as file:
+                    file.write(sample_result)
+                    file.write(sample_error_txt)
+
+                command_path = Path(f"{folder_path}/Command.txt")
             else:
                 Colour.print_green("Test Passed")
                 self.success += 1
