@@ -12,7 +12,7 @@ e.g. ./crepe_stand
 if this file is in same directory
 
 BEFORE YOU DO IT:
-Run: "dcc --leak-check crepe_stand.c main.c -o crepe_stand"
+Run: "dcc --valgrind crepe_stand.c main.c -o crepe_stand"
 to check for memory leaks
 
 TO RUN THIS DO
