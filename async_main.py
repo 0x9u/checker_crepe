@@ -365,8 +365,6 @@ class Marker:
                 command_path = Path(f"{folder_path}/Command.txt")
                 with command_path.open("w") as file:
                     file.write(f"echo -e \"{command}\" | {PATH_PROGRAM}")
-
-                sample_result_path
                 self.failure += 1
             elif len(own_error_txt) > 0 or len(sample_error_txt) > 0:
                 Colour.print_red("Test Failed")
@@ -378,6 +376,7 @@ class Marker:
                     Colour.print_red("Congrats you managed to break 1511 crepe_stand!!!:")
                     Colour.print_red(sample_error_txt)
                 
+                folder_path = f"{os.getcwd()}/Bulk Tests/{self.test_name}/{id}/"
                 parent_path = Path(folder_path)
                 parent_path.mkdir(parents=True, exist_ok=True)
 
