@@ -393,6 +393,8 @@ class Marker:
                     file.write(sample_error_txt)
 
                 command_path = Path(f"{folder_path}/Command.txt")
+                with command_path.open("w") as file:
+                    file.write(f"echo -e \"{command}\" | {PATH_PROGRAM}")
             else:
                 Colour.print_green("Test Passed")
                 self.success += 1
